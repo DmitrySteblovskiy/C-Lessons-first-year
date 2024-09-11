@@ -1,8 +1,8 @@
 # Ссылки на Google Codestyle & Ваш первый контест
 
-### [Контест](https://contest.yandex.ru/contest/40236/problems/D/)
-
 ### [Кодстайл](https://google.github.io/styleguide/cppguide.html)
+
+### [Контест](https://contest.yandex.ru/contest/40236/problems/D/)
 
 # Разобранные топики, которые полезно запомнить:
 - Этапы сборки программы
