@@ -13,6 +13,7 @@ https://google.github.io/styleguide/cppguide.html
 */
 
 #include <iostream>
+#include <cassert> // Для тестирования
 #include <cstdlib> // Для malloc и free
 
 // Функция для перемешивания массивов
@@ -35,3 +36,5 @@ int main() {
     // Освобождение памяти
     ...
 }
+
+// Примеры и тесты находятся в соседнем файле test.cpp
