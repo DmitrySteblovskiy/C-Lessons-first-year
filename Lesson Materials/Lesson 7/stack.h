@@ -1,6 +1,5 @@
  #pragma once
 
-// Класс Stack
 template <typename T>
 class Stack {
 private:
@@ -25,9 +24,6 @@ public:
             pop();
         }
     }
-
-    // operators
-    // Stack(const )
 
 // Добавление - Гарник
     void push(const T value) {
@@ -63,4 +59,3 @@ public:
     // Вывод размера - Саша
     size_t size() const {return size_;}
 };
-
