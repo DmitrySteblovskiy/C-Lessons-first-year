@@ -200,4 +200,289 @@ gdb ./my_program
 - **Использование logpoints:**
   - Вместо остановки выполнения, логпойнты позволяют выводить сообщения в консоль без изменения кода.
 ---
+
+# Санитайзеры в C++
+
+## 1. Что такое санитайзеры, их виды: TSAN, ASAN, LSAN
+
+*Санитайзеры* (англ. *sanitizers*) — это инструменты, встроенные в компиляторы (например, GCC и Clang), предназначенные для обнаружения различных типов ошибок в коде во время выполнения программы. Они помогают разработчикам находить и исправлять такие проблемы, как утечки памяти, гонки данных и другие ошибки, которые могут быть трудны для обнаружения при обычном тестировании.
+
+### Виды санитайзеров
+
+1. *ASAN (Address Sanitizer)*
+
+   - *Назначение:* Обнаружение ошибок работы с памятью, таких как выход за границы буфера, использование памяти после освобождения (use-after-free), двойное освобождение (double free) и другие.
+   - *Применение:* Особенно полезен для обнаружения ошибок доступа к памяти в C и C++ приложениях.
+
+2. *TSAN (Thread Sanitizer)*
+
+   - *Назначение:* Обнаружение гонок данных (data races) в многопоточных приложениях.
+   - *Применение:* Используется для анализа многопоточных программ, выявляя состояния, при которых несколько потоков одновременно обращаются к одной и той же памяти без надлежащей синхронизации.
+
+3. *LSAN (Leak Sanitizer)*
+
+   - *Назначение:* Обнаружение утечек памяти, то есть случаев, когда память выделяется, но никогда не освобождается.
+   - *Применение:* Полезен для поиска и устранения утечек памяти, что важно для долгоживущих и ресурсоёмких приложений.
+
+### Преимущества использования санитайзеров
+
+- *Ранняя диагностика:* Помогают обнаруживать ошибки на этапе разработки, до выпуска продукта.
+- *Улучшение качества кода:* Снижают количество потенциальных ошибок, повышая надежность и стабильность приложения.
+- *Интеграция с инструментами разработки:* Легко интегрируются с современными IDE и системами сборки, такими как CLion и CMake.
+
+## 2. Как явно включить санитайзеры в CLion в `CMakeLists.txt` с примером кода
+
+Для использования санитайзеров в проекте на C++ с использованием CLion и CMake необходимо настроить соответствующие флаги компиляции и линковки. Ниже представлен пример настройки `CMakeLists.txt` для включения Address Sanitizer (ASAN), Thread Sanitizer (TSAN) и Leak Sanitizer (LSAN).
+
+### Пример `CMakeLists.txt`
+
+```cmake
+cmake_minimum_required(VERSION 3.28)
+project(SanitizerExample)
+
+set(CMAKE_CXX_STANDARD 23)
+
+# Определяем опции для включения санитайзеров
+option(USE_ASAN "Enable Address Sanitizer" OFF)
+option(USE_TSAN "Enable Thread Sanitizer" OFF)
+option(USE_LSAN "Enable Leak Sanitizer" OFF)
+
+# Функция для добавления флагов санитайзеров
+function(add_sanitizer TARGET)
+    if(USE_ASAN)
+        target_compile_options(${TARGET} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+        target_link_options(${TARGET} PRIVATE -fsanitize=address)
+    endif()
+    if(USE_TSAN)
+        target_compile_options(${TARGET} PRIVATE -fsanitize=thread)
+        target_link_options(${TARGET} PRIVATE -fsanitize=thread)
+    endif()
+    if(USE_LSAN)
+        target_compile_options(${TARGET} PRIVATE -fsanitize=leak)
+        target_link_options(${TARGET} PRIVATE -fsanitize=leak)
+    endif()
+endfunction()
 ```
+
+# Добавляем исполняемый файл
+add_executable(SanitizerExample main.cpp)
+
+# Применяем санитайзеры к цели
+add_sanitizer(SanitizerExample)
+
+# Устанавливаем режим компиляции в Debug, если не задано иначе
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+### Инструкции по настройке в CLion
+
+1. *Открытие проекта:*
+   - Откройте ваш проект в CLion.
+
+2. *Редактирование `CMakeLists.txt`:*
+   - Вставьте приведённый выше пример `CMakeLists.txt` в корень вашего проекта или интегрируйте необходимые части в существующий файл.
+
+3. *Включение санитайзеров:*
+   - Перейдите в настройки CMake: *File* > *Settings* > *Build, Execution, Deployment* > *CMake*.
+   - В поле *CMake options* добавьте соответствующие флаги для включения нужных санитайзеров. Например:
+     - Для включения Address Sanitizer:
+       
+       -DUSE_ASAN=ON
+```
+- Для включения Thread Sanitizer:
+
+-DUSE_TSAN=ON
+       ```
+     - Для включения Leak Sanitizer:
+       ```
+       -DUSE_LSAN=ON
+       ```
+
+4. **Перестройка проекта:**
+   - После внесения изменений перестройте проект, чтобы применить новые настройки компиляции.
+
+## 3. Пример кода с ошибками очищения памяти и использования санитайзера для поиска причины ошибки
+
+Рассмотрим пример программы на C++, которая содержит ошибки управления памятью, такие как утечка памяти и использование уже освобождённой памяти. Использование Address Sanitizer поможет обнаружить эти ошибки.
+
+### Пример `main.cpp`
+
+```cpp
+#include <iostream>
+#include <cstring>
+
+class String {
+public:
+    String(const char* str) {
+        if (str) {
+            size = std::strlen(str);
+            data = new char[size + 1];
+            std::strcpy(data, str);
+        } else {
+            size = 0;
+            data = nullptr;
+        }
+    }
+
+    ~String() {
+        delete[] data;
+    }
+
+    void setString(const char* str) {
+        delete[] data; // Ошибка: двойное удаление, если вызвать дважды
+        size = std::strlen(str);
+        data = new char[size + 1];
+        std::strcpy(data, str);
+    }
+
+    void print() const {
+        if (data) {
+            std::cout << data << std::endl;
+        }
+    }
+
+private:
+    char* data;
+    size_t size;
+};
+
+int main() {
+    String* s = new String("Hello, World!");
+    s->print();
+
+    s->setString("Goodbye!");
+    s->print();
+
+    delete s;
+    delete s; // Ошибка: двойное удаление
+
+    return 0;
+}
+```
+
+### Описание ошибок
+
+1. **Двойное удаление памяти:**
+   - В функции `main` объект `s` удаляется дважды с помощью `delete s;`, что приводит к ошибке `double free`.
+
+2. **Утечка памяти:**
+   - Если в функции `setString` вызвать `delete[] data;` несколько раз без правильной проверки, это может привести к утечке памяти или другим ошибкам.
+
+### Запуск с использованием Address Sanitizer
+
+1. **Сборка с ASAN:**
+   - Убедитесь, что в `CMakeLists.txt` включён Address Sanitizer.
+   - Сборка должна выполняться с флагом `-fsanitize=address`.
+
+2. **Запуск программы:**
+   - Запустите программу через CLion или терминал.
+
+3. **Ожидаемый вывод от ASAN:**
+
+```
+Hello, World!
+Goodbye!
+=================================================================
+==12345==ERROR: AddressSanitizer: double-free on address 0x602000000010 at pc 0x0000004006d9 bp 0x7ffeea3c6b80 sp 0x7ffeea3c6b78
+    #0 0x4006d8 in String::~String() (./SanitizerExample+0x4006d8)
+    #1 0x4007a5 in main (./SanitizerExample+0x4007a5)
+    #2 0x7fff6c3c483f in start (libdyld.dylib+0x243f)
+
+0x602000000010 is located 0 bytes inside of 14-byte region [0x602000000010,0x60200000001e)
+freed by thread T0 here:
+    #0 0x7fff8d55c5ef in free (libsystem_malloc.dylib+0x25ef)
+    #1 0x4006c9 in String::~String() (./SanitizerExample+0x4006c9)
+    #2 0x4007a5 in main (./SanitizerExample+0x4007a5)
+
+previously allocated by thread T0 here:
+    #0 0x7fff8d55c933 in malloc (libsystem_malloc.dylib+0x2933)
+    #1 0x400688 in String::String(char const*) (./SanitizerExample+0x400688)
+    #2 0x400755 in main (./SanitizerExample+0x400755)
+```
+
+### Интерпретация результатов
+
+- **Double-free Error:** Санитайзер обнаружил, что память была освобождена дважды, что может привести к повреждению управляемых метаданных памяти и непредсказуемому поведению программы.
+- **Стек вызовов:** Показывает, где именно в коде произошла ошибка, что значительно облегчает процесс отладки.
+
+### Как исправить ошибки
+
+1. **Избежать двойного удаления:**
+   - После удаления указателя следует устанавливать его в `nullptr`:
+     ```cpp
+     delete s;
+     s = nullptr;
+     ```
+
+2. **Использовать умные указатели:**
+   - Применение умных указателей (`std::unique_ptr`, `std::shared_ptr`) может автоматизировать управление памятью и предотвратить подобные ошибки.
+
+3. **Проверка перед удалением:**
+   - Перед вызовом `delete` проверяйте, не равен ли указатель `nullptr`.
+
+### Исправленный пример `main.cpp`
+
+```cpp
+#include <iostream>
+#include <cstring>
+#include <memory>
+
+class String {
+
+public:
+    String(const char* str) {
+        if (str) {
+            size = std::strlen(str);
+            data = new char[size + 1];
+            std::strcpy(data, str);
+        } else {
+            size = 0;
+            data = nullptr;
+        }
+    }
+
+    ~String() {
+        delete[] data;
+    }
+
+    void setString(const char* str) {
+        if (data) {
+            delete[] data;
+        }
+        size = std::strlen(str);
+        data = new char[size + 1];
+        std::strcpy(data, str);
+    }
+
+    void print() const {
+        if (data) {
+            std::cout << data << std::endl;
+        }
+    }
+
+private:
+    char* data;
+    size_t size;
+};
+
+int main() {
+    String* s = new String("Hello, World!");
+    s->print();
+
+    s->setString("Goodbye!");
+    s->print();
+
+    delete s;
+    s = nullptr; // Устанавливаем указатель в nullptr после удаления
+
+    // Дополнительная защита от двойного удаления
+    if (s) {
+        delete s;
+    }
+
+    return 0;
+}
+```
+
+После внесения исправлений повторный запуск с Address Sanitizer не обнаружит ошибок двойного освобождения или утечек памяти.
