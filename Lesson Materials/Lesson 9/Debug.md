@@ -283,7 +283,7 @@ endif()
      - Для включения Address Sanitizer:
        
        -DUSE_ASAN=ON
-```
+
 - Для включения Thread Sanitizer:
 
 -DUSE_TSAN=ON
