@@ -262,28 +262,22 @@ function(add_sanitizer TARGET)
         target_link_options(${TARGET} PRIVATE -fsanitize=leak)
     endif()
 endfunction()
-```
 
-# Добавляем исполняемый файл
 add_executable(SanitizerExample main.cpp)
-
-# Применяем санитайзеры к цели
 add_sanitizer(SanitizerExample)
 
-# Устанавливаем режим компиляции в Debug, если не задано иначе
+# if required, u could set debug mode right here:
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
+```
 
 ### Инструкции по настройке в CLion
 
-1. *Открытие проекта:*
-   - Откройте ваш проект в CLion.
+1. *Отредачьте `CMakeLists.txt`:*
+   - Можно взять пример от жпт сверху.
 
-2. *Редактирование `CMakeLists.txt`:*
-   - Вставьте приведённый выше пример `CMakeLists.txt` в корень вашего проекта или интегрируйте необходимые части в существующий файл.
-
-3. *Включение санитайзеров:*
+2. *Включение санитайзеров:*
    - Перейдите в настройки CMake: *File* > *Settings* > *Build, Execution, Deployment* > *CMake*.
    - В поле *CMake options* добавьте соответствующие флаги для включения нужных санитайзеров. Например:
      - Для включения Address Sanitizer:
@@ -299,7 +293,7 @@ endif()
        -DUSE_LSAN=ON
        ```
 
-4. **Перестройка проекта:**
+4. **Пересборка проекта:**
    - После внесения изменений перестройте проект, чтобы применить новые настройки компиляции.
 
 ## 3. Пример кода с ошибками очищения памяти и использования санитайзера для поиска причины ошибки
@@ -309,9 +303,6 @@ endif()
 ### Пример `main.cpp`
 
 ```cpp
-#include <iostream>
-#include <cstring>
-
 class String {
 public:
     String(const char* str) {
@@ -330,7 +321,7 @@ public:
     }
 
     void setString(const char* str) {
-        delete[] data; // Ошибка: двойное удаление, если вызвать дважды
+        delete[] data; // Ошибка: повторное удаление, если вызвать дважды
         size = std::strlen(str);
         data = new char[size + 1];
         std::strcpy(data, str);
