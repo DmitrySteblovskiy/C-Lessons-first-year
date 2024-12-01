@@ -412,13 +412,9 @@ previously allocated by thread T0 here:
 3. **Проверка перед удалением:**
    - Перед вызовом `delete` проверяйте, не равен ли указатель `nullptr`.
 
-### Исправленный пример `main.cpp`
+### Исправленный пример кода
 
 ```cpp
-#include <iostream>
-#include <cstring>
-#include <memory>
-
 class String {
 
 public:
@@ -471,8 +467,6 @@ int main() {
     if (s) {
         delete s;
     }
-
-    return 0;
 }
 ```
 
