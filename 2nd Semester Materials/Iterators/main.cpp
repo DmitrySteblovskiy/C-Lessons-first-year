@@ -50,6 +50,6 @@ int main() {
     std::ptrdiff_t dist = finish - start;
     std::cout << "Дистанция между start и finish: " << dist << "\n\n";
 
-    // Тест 5: Проверка оператора []
+    // Тестим оператор []
     std::cout << "Третий элемент массива: " << start[2] << "\n";
 }
