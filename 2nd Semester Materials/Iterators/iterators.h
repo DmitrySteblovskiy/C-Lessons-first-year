@@ -7,7 +7,7 @@
 template <typename T>
 class MyRandomAccessIterator {
 public:
-    // iterator_traits
+    // std::iterator_traits - шаблонная структурка с основными чертами итератора
     using value_type        = T;
     using reference         = T&;
     using pointer           = T*;
