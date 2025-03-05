@@ -60,3 +60,37 @@
   - **Сравнения:** `<`, `>`, `<=`, `>=` – для сравнения позиций в контейнере.
 
 ---
+
+## std::iterator_traits
+
+При написании алгоритмов или своих итераторов часто возникает необходимость в получении / использовании конкретного типа итератора. Для этого в стандартной библиотеке C++ имеется шаблон `std::iterator_traits`, который определяет типы, ассоциированные с итератором. Например, для `Random Access Iterator` в `iterator_traits` записаны следующие типы:
+
+- **value_type**: тип значения, на которое указывает итератор.
+- **difference_type**: тип, используемый для представления разницы между итераторами (обычно знаковый тип, например, `std::ptrdiff_t`).
+- **pointer**: тип указателя на значение.
+- **reference**: тип ссылки на значение.
+- **iterator_category**: тип, описывающий категорию итератора (например, `std::random_access_iterator_tag` для итераторов с произвольным доступом).
+
+Рассмотрим пример использования `std::iterator_traits` для произвольного итератора:
+
+```cpp
+using traits = std::iterator_traits<MyRandomAccessIterator<int>>;
+using value_type = traits::value_type;          // int
+using difference_type = traits::difference_type; // обычно std::ptrdiff_t или другой знаковый тип
+using pointer = traits::pointer;                // int*
+using reference = traits::reference;            // int&
+using iterator_category = traits::iterator_category;  // std::random_access_iterator_tag
+```
+
+В main.cpp имеется разобранный на паре пример подсчета расстояния с `difference_type`.
+
+Также обсуждалась полезность проверки концептов ваших итераторов с помощью `static_assert` - это позволит понять на этапе компиляции, не забыли ли вы что либо в своем итераторе:
+
+```cpp
+// Проверка соответствия концепту std::random_access_iterator
+static_assert(std::random_access_iterator<MyRandomAccessIterator<int>>);
+static_assert(std::random_access_iterator<MyRandomAccessIterator<double>>);
+static_assert(std::random_access_iterator<MyRandomAccessIterator<std::string>>);
+```
+
+---
