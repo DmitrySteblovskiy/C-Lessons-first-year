@@ -39,9 +39,8 @@ int main() {
     try {
         readFile("data.txt");
     } catch (const std::exception &e) {
-        std::cerr << "Ошибка: " << e.what() << std::endl;
+        std::cerr << "Ошибка: " << e.what() << "\n";
     }
-    return 0;
 }
 ```
 
@@ -59,7 +58,7 @@ int main() {
 #include <stdexcept>
 
 void safeFunction() noexcept {
-    std::cout << "Функция safeFunction не выбрасывает исключений." << std::endl;
+    std::cout << "Функция safeFunction не выбрасывает исключений." << "\n";
 }
 ```
 
@@ -81,13 +80,12 @@ int main() {
     std::vector<int> vec;
     std::cout << std::boolalpha;
     std::cout << "std::vector<int>::pop_back() noexcept? " 
-              << noexcept(vec.pop_back()) << std::endl;
+              << noexcept(vec.pop_back()) << "\n";
     
     // Для push_back в данном случае результат может зависеть от реализации,
     // так как возможна аллокация памяти.
     std::cout << "std::vector<int>::push_back() noexcept? " 
-              << noexcept(vec.push_back(42)) << std::endl;
-    return 0;
+              << noexcept(vec.push_back(42)) << "\n";
 }
 ```
 
